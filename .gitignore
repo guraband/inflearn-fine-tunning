@@ -14,3 +14,9 @@ test/
 
 # Data cache directory
 data_cache/
+
+# Checkpoint directory
+checkpoints/
+
+# Saved models directory
+models/

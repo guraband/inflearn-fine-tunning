@@ -8,12 +8,15 @@
 ├── 12_bert.py              # 메인 BERT 파인튜닝 스크립트
 ├── 12_bert.ipynb           # 원본 Jupyter 노트북
 ├── 12_bert_mlx.ipynb       # MLX 버전 노트북
-├── mps_utils.py            # MPS 유틸리티 모듈 (새로 추가)
+├── mps_utils.py            # MPS 유틸리티 모듈
 ├── test_mps_utils.py       # MPS 유틸리티 테스트 스크립트
+├── use_saved_model.py      # 저장된 모델 사용 예시
 ├── main.py                 # 간단한 실행 스크립트
 ├── pyproject.toml          # 프로젝트 의존성
 ├── README.md               # 이 파일
-└── data_cache/             # 데이터셋 캐시 디렉토리 (자동 생성)
+├── data_cache/             # 데이터셋 캐시 디렉토리 (자동 생성)
+├── checkpoints/            # 체크포인트 저장 디렉토리 (자동 생성)
+└── models/                 # 파인튜닝된 모델 저장 디렉토리 (자동 생성)
 ```
 
 ## 🚀 사용법
@@ -30,7 +33,13 @@ python 12_bert.py
 python test_mps_utils.py
 ```
 
-### 3. MPS 유틸리티 모듈 사용
+### 3. 저장된 모델 사용
+
+```bash
+python use_saved_model.py
+```
+
+### 4. MPS 유틸리티 모듈 사용
 
 다른 Python 스크립트에서 MPS 유틸리티를 사용하려면:
 
@@ -48,6 +57,34 @@ warm_up_mps()
 ```
 
 ## 🔧 주요 기능
+
+### 모델 저장 및 로드
+
+학습 완료 후 파인튜닝된 모델이 자동으로 `models/` 디렉토리에 저장됩니다.
+
+#### 저장되는 파일들:
+- `config.json`: 모델 설정
+- `model.safetensors`: 모델 가중치
+- `tokenizer.json`: 토크나이저
+- `tokenizer_config.json`: 토크나이저 설정
+- `vocab.txt`: 어휘 사전
+
+#### 모델 사용 예시:
+
+```python
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+# 저장된 모델 로드
+tokenizer = AutoTokenizer.from_pretrained("models/bert_imdb_1000samples")
+model = AutoModelForSequenceClassification.from_pretrained("models/bert_imdb_1000samples")
+
+# 감정 분석 수행
+text = "This movie was absolutely fantastic!"
+inputs = tokenizer(text, return_tensors="pt")
+outputs = model(**inputs)
+prediction = outputs.logits.argmax(dim=-1)
+sentiment = "긍정" if prediction[0] == 1 else "부정"
+```
 
 ### MPS Utils 모듈 (`mps_utils.py`)
 
