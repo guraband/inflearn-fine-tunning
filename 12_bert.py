@@ -402,7 +402,7 @@ def preprocess_data(dataset: DatasetDict, tokenizer) -> DatasetDict:
     return dataset
 
 
-def setup_trainer(model, dataset: DatasetDict, checkpoint_config="auto", resume_from_checkpoint=None) -> Trainer:
+def setup_trainer(model, dataset: DatasetDict, tokenizer, checkpoint_config="auto", resume_from_checkpoint=None) -> Trainer:
     """훈련 설정 및 Trainer를 구성합니다."""
     print("\n=== 훈련 설정 구성 ===")
 
@@ -480,6 +480,7 @@ def setup_trainer(model, dataset: DatasetDict, checkpoint_config="auto", resume_
         train_dataset=dataset["train"],
         eval_dataset=dataset["test"],
         compute_metrics=compute_metrics,  # 정확도 계산 함수 추가
+        tokenizer=tokenizer,  # 토크나이저 추가
     )
 
     # 체크포인트에서 이어서 학습
@@ -516,7 +517,14 @@ def save_final_model(trainer: Trainer, model_name: str = "fine_tuned_bert"):
 
     # 모델과 토크나이저 저장
     trainer.save_model(model_dir)
-    trainer.tokenizer.save_pretrained(model_dir)
+
+    # 토크나이저 저장 (deprecated 경고 해결)
+    if hasattr(trainer, 'tokenizer') and trainer.tokenizer is not None:
+        trainer.tokenizer.save_pretrained(model_dir)
+    elif hasattr(trainer, 'processing_class') and trainer.processing_class is not None:
+        trainer.processing_class.save_pretrained(model_dir)
+    else:
+        print("⚠️  토크나이저를 찾을 수 없습니다. 모델만 저장됩니다.")
 
     print(f"✅ 모델 저장 완료!")
     print(f"   📁 저장 위치: {model_dir}/")
@@ -620,7 +628,7 @@ def main():
 
     # 8. 훈련 설정 (체크포인트 포함)
     trainer = setup_trainer(
-        model, dataset, checkpoint_config, resume_from_checkpoint)
+        model, dataset, tokenizer, checkpoint_config, resume_from_checkpoint)
 
     # 9. 모델 훈련 (이미 체크포인트에서 이어서 학습했다면 건너뜀)
     if not resume_from_checkpoint:
