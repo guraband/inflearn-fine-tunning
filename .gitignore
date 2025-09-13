@@ -11,3 +11,6 @@ wheels/
 
 # Training outputs
 test/
+
+# Data cache directory
+data_cache/
